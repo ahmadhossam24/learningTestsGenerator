@@ -9,7 +9,7 @@ from pathlib import Path
 class AnimalLearningGameGenerator:
     def __init__(self, root):
         self.root = root
-        self.root.title("Animal Learning Game Generator")
+        self.root.title("Learning Game Generator")
         self.root.geometry("900x700")
         
         # Data storage
@@ -198,6 +198,7 @@ class AnimalLearningGameGenerator:
             
         # Remove question button
         ttk.Button(frame, text="Remove Question", command=lambda: self.remove_question_frame(frame)).grid(row=2, column=2, sticky='e', pady=5)
+        ttk.Button(frame, text="Add Answer", command=lambda: add_answer_row()).grid(row=2, column=3, sticky='e', pady=5)
         
         # Configure grid weights
         frame.columnconfigure(1, weight=1)
@@ -442,7 +443,7 @@ class AnimalLearningGameGenerator:
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>لعبة الحيوانات التعليمية</title>
+  <title> امتحان تعليمي</title>
   <style>
     /* تحسينات التصميم العامة */
     body {{
@@ -617,7 +618,7 @@ class AnimalLearningGameGenerator:
 </head>
 <body>
   <div class="container">
-    <h1>🐾 Animal Learning Game 🐾</h1>
+    <h1>Learning Test</h1>
 
     <!-- صور الحيوانات -->
     {animals_html}
