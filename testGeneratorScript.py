@@ -32,6 +32,11 @@ class AnimalLearningGameGenerator:
         # Settings frame
         self.settings_frame = ttk.Frame(self.notebook, padding=10)
         self.notebook.add(self.settings_frame, text="Settings")
+
+        # successAudio
+        self.successAudioEncodedString=""
+        with open("successAudio.mp3", "rb") as audio_file:
+          self.successAudioEncodedString = base64.b64encode(audio_file.read()).decode("utf-8")
         
         self.setup_animals_section()
         self.setup_questions_section()
@@ -61,9 +66,28 @@ class AnimalLearningGameGenerator:
         # Add animal button
         ttk.Button(self.animals_frame, text="Add Animal", command=self.add_animal_frame).grid(row=0, column=2, pady=5, padx=5)
         
-        # Scrollable frame for animals
-        self.animals_container = ttk.Frame(self.animals_frame)
-        self.animals_container.grid(row=1, column=0, columnspan=3, sticky='nsew', pady=10)
+        #  # Create a frame for the canvas and scrollbar
+        container = ttk.Frame(self.animals_frame)
+        container.grid(row=1, column=0, columnspan=3, sticky='nsew', pady=10)
+        
+        # Create a canvas and scrollbar
+        canvas = tk.Canvas(container)
+        scrollbar = ttk.Scrollbar(container, orient="vertical", command=canvas.yview)
+        self.animals_container = ttk.Frame(canvas)
+        
+        # Configure the canvas
+        self.animals_container.bind(
+            "<Configure>",
+            lambda e: canvas.configure(scrollregion=canvas.bbox("all"))
+        )
+        
+        # Create a window in the canvas for the animals container
+        canvas.create_window((0, 0), window=self.animals_container, anchor="nw")
+        canvas.configure(yscrollcommand=scrollbar.set)
+        
+        # Pack the canvas and scrollbar
+        canvas.pack(side="left", fill="both", expand=True)
+        scrollbar.pack(side="right", fill="y")
         
         # Configure grid weights
         self.animals_frame.columnconfigure(0, weight=1)
@@ -117,7 +141,7 @@ class AnimalLearningGameGenerator:
     def browse_audio(self, audio_entry):
         filename = filedialog.askopenfilename(
             title="Select Audio File",
-            filetypes=[("Audio files", "*.mp3 *.wav *.ogg"), ("All files", "*.*")]
+            filetypes=[("Audio files", "*.mp3 *.wav *.ogg *.OPUS"), ("All files", "*.*")]
         )
         if filename:
             audio_entry.delete(0, tk.END)
@@ -127,9 +151,28 @@ class AnimalLearningGameGenerator:
         # Add question button
         ttk.Button(self.questions_frame, text="Add Question", command=self.add_question_frame).pack(pady=5)
         
-        # Scrollable frame for questions
-        self.questions_container = ttk.Frame(self.questions_frame)
-        self.questions_container.pack(fill='both', expand=True, pady=10)
+        # Create a frame for the canvas and scrollbar
+        container = ttk.Frame(self.questions_frame)
+        container.pack(fill='both', expand=True, pady=10)
+        
+        # Create a canvas and scrollbar
+        canvas = tk.Canvas(container)
+        scrollbar = ttk.Scrollbar(container, orient="vertical", command=canvas.yview)
+        self.questions_container = ttk.Frame(canvas)
+        
+        # Configure the canvas
+        self.questions_container.bind(
+            "<Configure>",
+            lambda e: canvas.configure(scrollregion=canvas.bbox("all"))
+        )
+        
+        # Create a window in the canvas for the questions container
+        canvas.create_window((0, 0), window=self.questions_container, anchor="nw")
+        canvas.configure(yscrollcommand=scrollbar.set)
+        
+        # Pack the canvas and scrollbar
+        canvas.pack(side="left", fill="both", expand=True)
+        scrollbar.pack(side="right", fill="y")
         
         # Add initial question frame
         self.add_question_frame()
@@ -138,14 +181,19 @@ class AnimalLearningGameGenerator:
         frame = ttk.Frame(self.questions_container, relief='groove', borderwidth=1)
         frame.pack(fill='x', pady=5, padx=5)
         
-        # Question text
-        ttk.Label(frame, text="Question Text:").grid(row=0, column=0, sticky='w', pady=2)
-        question_text_entry = ttk.Entry(frame, width=50)
-        question_text_entry.grid(row=0, column=1, columnspan=2, sticky='we', pady=2, padx=5)
+        # Question image URL
+        ttk.Label(frame, text="Question Image URL (optional):").grid(row=0, column=0, sticky='w', pady=2)
+        image_url_entry = ttk.Entry(frame, width=50)
+        image_url_entry.grid(row=0, column=1, columnspan=2, sticky='we', pady=2, padx=5)
         
-        # Answers frame
+        # Question text (moved to row 1)
+        ttk.Label(frame, text="Question Text:").grid(row=1, column=0, sticky='w', pady=2)
+        question_text_entry = ttk.Entry(frame, width=50)
+        question_text_entry.grid(row=1, column=1, columnspan=2, sticky='we', pady=2, padx=5)
+        
+        # Answers frame (moved to row 2)
         answers_frame = ttk.LabelFrame(frame, text="Answers")
-        answers_frame.grid(row=1, column=0, columnspan=3, sticky='we', pady=5, padx=5)
+        answers_frame.grid(row=2, column=0, columnspan=3, sticky='we', pady=5, padx=5)
         
         # Correct answer variable
         correct_answer_var = tk.StringVar()
@@ -197,14 +245,15 @@ class AnimalLearningGameGenerator:
             add_answer_row()
             
         # Remove question button
-        ttk.Button(frame, text="Remove Question", command=lambda: self.remove_question_frame(frame)).grid(row=2, column=2, sticky='e', pady=5)
-        ttk.Button(frame, text="Add Answer", command=lambda: add_answer_row()).grid(row=2, column=3, sticky='e', pady=5)
+        ttk.Button(frame, text="Remove Question", command=lambda: self.remove_question_frame(frame)).grid(row=4, column=2, sticky='e', pady=5)
+        ttk.Button(frame, text="Add Answer", command=lambda: add_answer_row()).grid(row=4, column=3, sticky='e', pady=5)
         
         # Configure grid weights
         frame.columnconfigure(1, weight=1)
         answers_frame.columnconfigure(1, weight=1)
         
         # Store references
+        frame.image_url = image_url_entry
         frame.question_text = question_text_entry
         frame.answer_entries = answer_entries
         frame.radio_buttons = radio_buttons
@@ -284,6 +333,7 @@ class AnimalLearningGameGenerator:
             for question_data in config.get('questions', []):
                 self.add_question_frame()
                 question_frame = self.questions[-1]
+                question_frame.image_url.insert(0, question_data.get('image_url', '')) 
                 question_frame.question_text.insert(0, question_data.get('text', ''))
                 
                 # Clear default answers
@@ -403,8 +453,14 @@ class AnimalLearningGameGenerator:
             questions_html = ""
             for i, question in enumerate(self.questions):
                 question_text = question.question_text.get()
+                image_url = question.image_url.get()
                 answers = [entry.get() for entry in question.answer_entries]
                 correct_index = int(question.correct_answer_var.get()) if question.correct_answer_var.get() else 0
+
+                # Add image if provided
+                image_html = ""
+                if image_url:
+                    image_html = f'<img src="{image_url}" alt="Question image" style="max-width: 300px; margin-bottom: 15px; border-radius: 15px;">'
                 
                 answers_html = ""
                 for j, answer in enumerate(answers):
@@ -412,6 +468,7 @@ class AnimalLearningGameGenerator:
                 
                 questions_html += f"""
                 <div class="question" id="q{i+1}">
+                    {image_html}
                     <div class="question-text">{question_text}</div>
                     <div class="answers-container">
                         {answers_html}
@@ -435,6 +492,13 @@ class AnimalLearningGameGenerator:
                 if 0 <= correct_index < len(answers):
                     correct_answer_text_js += f"    {i+1}: \"{answers[correct_index]}\",\n"
             correct_answer_text_js += "};\n"
+            
+            successAudioEncoded=f""" 
+            <audio id="successAudio" controls style="display: none;">
+              <source src="data:audio/mp3;base64,{self.successAudioEncodedString}" type="audio/mp3">
+              Your browser does not support the audio element.
+            </audio>
+            """
             
             # Read HTML template
             html_template = """
@@ -617,6 +681,7 @@ class AnimalLearningGameGenerator:
   </style>
 </head>
 <body>
+  {successAudioEncoded}
   <div class="container">
     <h1>Learning Test</h1>
 
@@ -677,10 +742,13 @@ class AnimalLearningGameGenerator:
       // إنشاء عنصر صوت مؤقت للإجابة الصحيحة
       const text = correctAnswerText[questionId];
       if (text) {{
-        const utterance = new SpeechSynthesisUtterance(text);
-        utterance.lang = "ar-SA";
-        utterance.rate = 0.9;
-        speechSynthesis.speak(utterance);
+      //   const utterance = new SpeechSynthesisUtterance(text);
+      //   utterance.lang = "ar-SA";
+      //   utterance.rate = 0.9;
+      //   speechSynthesis.speak(utterance);
+           const successAudio = document.getElementById('successAudio');
+           successAudio.currentTime = 0;
+           successAudio.play();
       }}
     }}
   </script>
@@ -690,6 +758,7 @@ class AnimalLearningGameGenerator:
             
             # Format the HTML
             html_content = html_template.format(
+                successAudioEncoded=successAudioEncoded,
                 animals_html=animals_html,
                 questions_html=questions_html,
                 correct_answers_js=correct_answers_js,
