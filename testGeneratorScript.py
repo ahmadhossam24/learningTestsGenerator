@@ -2,9 +2,20 @@ import tkinter as tk
 from tkinter import ttk, filedialog, messagebox
 import json
 import base64
+import sys
 import os
 import urllib.request
 from pathlib import Path
+
+def resource_path(relative_path):
+    """ Get absolute path to resource, works for dev and for PyInstaller """
+    try:
+        # PyInstaller creates a temp folder and stores path in _MEIPASS
+        base_path = sys._MEIPASS
+    except Exception:
+        base_path = os.path.abspath(".")
+
+    return os.path.join(base_path, relative_path)
 
 class AnimalLearningGameGenerator:
     def __init__(self, root):
@@ -35,8 +46,12 @@ class AnimalLearningGameGenerator:
 
         # successAudio
         self.successAudioEncodedString=""
-        with open("successAudio.mp3", "rb") as audio_file:
-          self.successAudioEncodedString = base64.b64encode(audio_file.read()).decode("utf-8")
+        try:
+            success_audio_path = resource_path("successAudio.mp3")
+            with open(success_audio_path, "rb") as success_audio_file:
+                self.successAudioEncodedString = base64.b64encode(success_audio_file.read()).decode("utf-8")
+        except Exception as e:
+            messagebox.showerror("Error", f"Failed to load success audio: {str(e)}")
         
         self.setup_animals_section()
         self.setup_questions_section()
