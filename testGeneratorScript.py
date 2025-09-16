@@ -23,7 +23,7 @@ class AnimalLearningGameGenerator:
         
         # Animals frame
         self.animals_frame = ttk.Frame(self.notebook, padding=10)
-        self.notebook.add(self.animals_frame, text="Animals")
+        self.notebook.add(self.animals_frame, text="Cards")
         
         # Questions frame
         self.questions_frame = ttk.Frame(self.notebook, padding=10)
@@ -42,6 +42,35 @@ class AnimalLearningGameGenerator:
         self.setup_questions_section()
         self.setup_settings_section()
         self.setup_menu()
+        self.setup_context_menus()
+
+    def setup_context_menus(self):
+        # Create a context menu
+        self.context_menu = tk.Menu(self.root, tearoff=0)
+        self.context_menu.add_command(label="Cut", command=lambda: self.cut_text())
+        self.context_menu.add_command(label="Copy", command=lambda: self.copy_text())
+        self.context_menu.add_command(label="Paste", command=lambda: self.paste_text())
+        
+        # Bind right-click event to all entry widgets
+        self.root.bind_class("TEntry", "<Button-3>", self.show_context_menu)
+        
+    def show_context_menu(self, event):
+        # Store the widget that was right-clicked
+        self.focused_widget = event.widget
+        # Show the context menu at the cursor position
+        self.context_menu.post(event.x_root, event.y_root)
+        
+    def cut_text(self):
+        if hasattr(self, 'focused_widget') and isinstance(self.focused_widget, tk.Entry):
+            self.focused_widget.event_generate("<<Cut>>")
+            
+    def copy_text(self):
+        if hasattr(self, 'focused_widget') and isinstance(self.focused_widget, tk.Entry):
+            self.focused_widget.event_generate("<<Copy>>")
+            
+    def paste_text(self):
+        if hasattr(self, 'focused_widget') and isinstance(self.focused_widget, tk.Entry):
+            self.focused_widget.event_generate("<<Paste>>")
         
     def setup_menu(self):
         menubar = tk.Menu(self.root)
@@ -58,13 +87,13 @@ class AnimalLearningGameGenerator:
         
     def setup_animals_section(self):
         # Animals per row setting
-        ttk.Label(self.animals_frame, text="Animals per row:").grid(row=0, column=0, sticky='w', pady=5)
+        ttk.Label(self.animals_frame, text="Cards per row:").grid(row=0, column=0, sticky='w', pady=5)
         self.animals_per_row_var = tk.StringVar(value="3")
         animals_per_row_spinbox = ttk.Spinbox(self.animals_frame, from_=1, to=6, textvariable=self.animals_per_row_var, width=5)
         animals_per_row_spinbox.grid(row=0, column=1, sticky='w', pady=5)
         
         # Add animal button
-        ttk.Button(self.animals_frame, text="Add Animal", command=self.add_animal_frame).grid(row=0, column=2, pady=5, padx=5)
+        ttk.Button(self.animals_frame, text="Add Card", command=self.add_animal_frame).grid(row=0, column=2, pady=5, padx=5)
         
         #  # Create a frame for the canvas and scrollbar
         container = ttk.Frame(self.animals_frame)
